@@ -1,11 +1,8 @@
-﻿using System;
-using System.Data;
+﻿using System.Data;
 using Dapper;
 using GreenPipes;
 using MassTransit;
-using MassTransit.DapperIntegration;
 using MassTransit.EntityFrameworkCoreIntegration;
-using MassTransit.Saga;
 using MassTransitSagaDeadlock.Worker.Auxiliary;
 using MassTransitSagaDeadlock.Worker.Commands;
 using MassTransitSagaDeadlock.Worker.Consumers;
@@ -16,9 +13,7 @@ using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace MassTransitSagaDeadlock.Worker
