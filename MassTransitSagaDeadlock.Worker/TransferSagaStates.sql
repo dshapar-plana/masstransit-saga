@@ -1,7 +1,10 @@
-﻿IF EXISTS (SELECT * FROM sysobjects WHERE name='TransferSagaStates' and xtype='U')
+﻿--IF EXISTS (SELECT * FROM sysobjects WHERE name='TransferSagaStates' and xtype='U')
+--BEGIN
+--  DROP TABLE [dbo].[TransferSagaStates]
+--END
+
+IF EXISTS (SELECT * FROM sysobjects WHERE name='TransferSagaStates' and xtype='U')
 BEGIN
-  DROP TABLE [dbo].[TransferSagaStates]
-END
 
 CREATE TABLE [dbo].[TransferSagaStates] (
   [CorrelationID] uniqueidentifier NOT NULL CONSTRAINT pk_TransferSagaStates_CorrelationID PRIMARY KEY CLUSTERED,
@@ -18,14 +21,16 @@ CREATE TABLE [dbo].[TransferSagaStates] (
   [Hash] varchar(64) NOT NULL,
   [Salt] varchar(64) NOT NULL
 );
+END
 
-GO
+--IF EXISTS (SELECT * FROM sysobjects WHERE name='TransferSagaState' and xtype='U')
+--BEGIN
+--  DROP TABLE [dbo].[TransferSagaState]
+--END
 
 IF EXISTS (SELECT * FROM sysobjects WHERE name='TransferSagaState' and xtype='U')
 BEGIN
-  DROP TABLE [dbo].[TransferSagaState]
-END
-
+ 
 CREATE TABLE [dbo].[TransferSagaState] (
   [CorrelationID] uniqueidentifier NOT NULL CONSTRAINT pk_TransferSagaState_CorrelationID PRIMARY KEY CLUSTERED,
   [CreatedAtDatetime] datetime2 NOT NULL,
@@ -41,5 +46,4 @@ CREATE TABLE [dbo].[TransferSagaState] (
   [Hash] varchar(64) NOT NULL,
   [Salt] varchar(64) NOT NULL
 );
-
-GO
+END

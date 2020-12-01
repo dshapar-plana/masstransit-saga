@@ -1,12 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Data;
 using Dapper;
 using GreenPipes;
 using MassTransit;
 using MassTransit.DapperIntegration;
 using MassTransit.EntityFrameworkCoreIntegration;
-using MassTransit.EntityFrameworkCoreIntegration.Mappings;
 using MassTransit.Saga;
 using MassTransitSagaDeadlock.Worker.Auxiliary;
 using MassTransitSagaDeadlock.Worker.Commands;
@@ -16,7 +14,6 @@ using MassTransitSagaDeadlock.Worker.Saga;
 using MassTransitSagaDeadlock.Worker.Settings;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -117,39 +114,5 @@ namespace MassTransitSagaDeadlock.Worker
                         });
                     });
                 });
-    }
-
-    public class TransferSagaStateMap :
-        SagaClassMap<TransferSagaState>
-    {
-        protected override void Configure(EntityTypeBuilder<TransferSagaState> entity, ModelBuilder model)
-        {
-            entity.Property(x => x.CurrentState).HasMaxLength(64);
-
-            // If using Optimistic concurrency, otherwise remove this property
-            //entity.Property(x => x.RowVersion).IsRowVersion();
-        }
-    }
-
-    public class TransferSagaStateDbContext :
-        SagaDbContext
-    {
-        public TransferSagaStateDbContext(DbContextOptions options)
-            : base(options)
-        {
-        }
-
-        protected override IEnumerable<ISagaClassMap> Configurations
-        {
-            get { yield return new TransferSagaStateMap(); }
-        }
-
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
-        {
-            modelBuilder.Entity<TransferSagaState>().HasKey(a => a.CorrelationId);
-            modelBuilder.Entity<TransferSagaState>().Ignore(a => a.Metadata);
-            modelBuilder.Entity<TransferSagaState>().Ignore(a => a.Errors);
-            base.OnModelCreating(modelBuilder);
-        }
     }
 }
