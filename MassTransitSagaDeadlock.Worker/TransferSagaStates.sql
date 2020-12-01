@@ -3,7 +3,27 @@
 --  DROP TABLE [dbo].[TransferSagaStates]
 --END
 
-IF EXISTS (SELECT * FROM sysobjects WHERE name='TransferSagaStates' and xtype='U')
+USE [master]
+GO
+
+IF NOT EXISTS(SELECT * FROM sys.databases WHERE name = 'masstransit_saga')
+BEGIN
+  CREATE DATABASE [masstransit_saga]
+END
+GO
+ 
+USE [masstransit_saga]
+GO
+
+ 
+IF EXISTS(select * from sys.databases WHERE name=DB_NAME())
+BEGIN
+  DECLARE @SQL nvarchar(max) = 'ALTER DATABASE "'+db_name()+'" SET RECOVERY SIMPLE'; 
+  EXEC sys.sp_ExecuteSQL @stmt=@SQL;
+END
+GO
+
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='TransferSagaStates' and xtype='U')
 BEGIN
 
 CREATE TABLE [dbo].[TransferSagaStates] (
@@ -28,7 +48,7 @@ END
 --  DROP TABLE [dbo].[TransferSagaState]
 --END
 
-IF EXISTS (SELECT * FROM sysobjects WHERE name='TransferSagaState' and xtype='U')
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='TransferSagaState' and xtype='U')
 BEGIN
  
 CREATE TABLE [dbo].[TransferSagaState] (
