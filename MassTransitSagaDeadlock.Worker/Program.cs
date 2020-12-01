@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Data;
+using System.IO;
+using System.Threading;
 using Dapper;
 using GreenPipes;
 using MassTransit;
-using MassTransit.DapperIntegration;
 using MassTransit.EntityFrameworkCoreIntegration;
-using MassTransit.Saga;
+using MassTransit.Logging;
 using MassTransitSagaDeadlock.Worker.Auxiliary;
 using MassTransitSagaDeadlock.Worker.Commands;
 using MassTransitSagaDeadlock.Worker.Consumers;
@@ -16,9 +17,7 @@ using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace MassTransitSagaDeadlock.Worker
@@ -35,10 +34,10 @@ namespace MassTransitSagaDeadlock.Worker
                 .ConfigureServices((hostContext, services) =>
                 {
                     services.AddMassTransitHostedService();
-
+                    var connectionString = hostContext.Configuration.GetValue<string>("ConnectionString");
                     //for Dapper
                     services.AddScoped<IDbConnection>(db =>
-                        new SqlConnection(hostContext.Configuration.GetValue<string>("ConnectionString")));
+                        new SqlConnection(connectionString));
 
                     services.Configure<MessagingSettings>(options =>
                         hostContext.Configuration.GetSection("MessagingSettings").Bind(options));
@@ -54,6 +53,20 @@ namespace MassTransitSagaDeadlock.Worker
 
                     SqlMapper.AddTypeHandler(new MsSqlErrorsCollectionTypeHandler());
                     SqlMapper.AddTypeHandler(new MsSqlMetadataCollectionTypeHandler());
+
+                    var separator = string.Empty.PadLeft(Console.BufferWidth, '_');
+
+                    Console.WriteLine($"Start database initialization\n{separator}");
+
+                    var command = File.ReadAllText("TransferSagaStates.sql");
+
+                    using (var sqlConnection = new SqlConnection(connectionString))
+                    {
+                        sqlConnection.Execute(command);
+                    }
+
+                    Console.WriteLine($"Database initialization completed.\n{separator}");
+
 
                     services.AddMassTransit(_ =>
                     {
@@ -71,7 +84,7 @@ namespace MassTransitSagaDeadlock.Worker
 
                             r.AddDbContext<DbContext, TransferSagaStateDbContext>((provider, builder) =>
                             {
-                                builder.UseSqlServer(hostContext.Configuration.GetValue<string>("ConnectionString")
+                                builder.UseSqlServer(connectionString
                                     //,optionsBuilder => optionsBuilder.EnableRetryOnFailure()
                                     );
                             });

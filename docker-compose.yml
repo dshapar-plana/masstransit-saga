@@ -1,0 +1,40 @@
+version: "3.5"
+services:
+  MassTransitSagaDeadlock.Worker:
+    image: masstransitsaga/deadlock.worker:linux
+    build:
+      context: .
+      dockerfile: MassTransitSagaDeadlock.Worker/Dockerfile
+    environment:
+      - DOTNET_ENVIRONMENT=ATIIsolated
+    depends_on: 
+      - rabbit
+      - mssql
+    networks: 
+      - backend
+    deploy:
+      replicas: 2
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    ports:
+      - 1401:1433
+    environment:
+      ACCEPT_EULA: Y
+      SA_PASSWORD: P@ssword1!
+    networks: 
+      - backend
+  rabbit:
+    image: rabbitmq:3-management-alpine
+    hostname: rabbit
+    environment:
+      - RABBITMQ_DEFAULT_PASS=guest
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_VHOST=/
+    ports:
+      - 15672:15672
+      - 5672:5672
+    networks: 
+      - backend
+networks:
+  backend: 
+    name: "backend"
