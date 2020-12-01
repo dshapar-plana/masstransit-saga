@@ -1,8 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Data;
 using Dapper;
 using GreenPipes;
 using MassTransit;
 using MassTransit.DapperIntegration;
+using MassTransit.EntityFrameworkCoreIntegration;
+using MassTransit.EntityFrameworkCoreIntegration.Mappings;
 using MassTransit.Saga;
 using MassTransitSagaDeadlock.Worker.Auxiliary;
 using MassTransitSagaDeadlock.Worker.Commands;
@@ -10,6 +14,9 @@ using MassTransitSagaDeadlock.Worker.Consumers;
 using MassTransitSagaDeadlock.Worker.Events;
 using MassTransitSagaDeadlock.Worker.Saga;
 using MassTransitSagaDeadlock.Worker.Settings;
+using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -32,6 +39,10 @@ namespace MassTransitSagaDeadlock.Worker
                 {
                     services.AddMassTransitHostedService();
 
+                    //for Dapper
+                    services.AddScoped<IDbConnection>(db =>
+                        new SqlConnection(hostContext.Configuration.GetValue<string>("ConnectionString")));
+
                     services.Configure<MessagingSettings>(options =>
                         hostContext.Configuration.GetSection("MessagingSettings").Bind(options));
 
@@ -44,33 +55,30 @@ namespace MassTransitSagaDeadlock.Worker
                     //    provider => DapperSagaRepository<TransferSagaState>.Create(
                     //        hostContext.Configuration.GetValue<string>("ConnectionString")));
 
-                    SqlMapper.AddTypeHandler(new MsSqlGuidTypeHandler());
                     SqlMapper.AddTypeHandler(new MsSqlErrorsCollectionTypeHandler());
                     SqlMapper.AddTypeHandler(new MsSqlMetadataCollectionTypeHandler());
-                    SqlMapper.RemoveTypeMap(typeof(Guid));
-                    SqlMapper.RemoveTypeMap(typeof(Guid?));
-                    
+
                     services.AddMassTransit(_ =>
                     {
                         _.AddConsumer<DepositFundsConsumer>();
                         _.AddConsumer<WithdrawFundsConsumer>();
 
                         _.AddSagaStateMachine<TransferSaga, TransferSagaState>()
-                            .DapperRepository(hostContext.Configuration.GetValue<string>("ConnectionString"));
+                        // .DapperRepository(hostContext.Configuration.GetValue<string>("ConnectionString"));
 
                         //DO NOT REMOVE
-                        //.EntityFrameworkRepository(r =>
-                        //{
-                        //    r.ConcurrencyMode =
-                        //        ConcurrencyMode.Optimistic; // or use Optimistic, which requires RowVersion
+                        .EntityFrameworkRepository(r =>
+                        {
+                            r.ConcurrencyMode =
+                                ConcurrencyMode.Pessimistic; // or use Optimistic, which requires RowVersion
 
-                        //    r.AddDbContext<DbContext, TransferSagaStateDbContext>((provider, builder) =>
-                        //    {
-                        //        builder.UseSqlServer(hostContext.Configuration.GetValue<string>("ConnectionString") 
-                        //            //,optionsBuilder => optionsBuilder.EnableRetryOnFailure()
-                        //            );
-                        //    });
-                        //});
+                            r.AddDbContext<DbContext, TransferSagaStateDbContext>((provider, builder) =>
+                            {
+                                builder.UseSqlServer(hostContext.Configuration.GetValue<string>("ConnectionString")
+                                    //,optionsBuilder => optionsBuilder.EnableRetryOnFailure()
+                                    );
+                            });
+                        });
 
                         _.UsingRabbitMq((context, config) =>
                         {
@@ -109,5 +117,39 @@ namespace MassTransitSagaDeadlock.Worker
                         });
                     });
                 });
+    }
+
+    public class TransferSagaStateMap :
+        SagaClassMap<TransferSagaState>
+    {
+        protected override void Configure(EntityTypeBuilder<TransferSagaState> entity, ModelBuilder model)
+        {
+            entity.Property(x => x.CurrentState).HasMaxLength(64);
+
+            // If using Optimistic concurrency, otherwise remove this property
+            //entity.Property(x => x.RowVersion).IsRowVersion();
+        }
+    }
+
+    public class TransferSagaStateDbContext :
+        SagaDbContext
+    {
+        public TransferSagaStateDbContext(DbContextOptions options)
+            : base(options)
+        {
+        }
+
+        protected override IEnumerable<ISagaClassMap> Configurations
+        {
+            get { yield return new TransferSagaStateMap(); }
+        }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<TransferSagaState>().HasKey(a => a.CorrelationId);
+            modelBuilder.Entity<TransferSagaState>().Ignore(a => a.Metadata);
+            modelBuilder.Entity<TransferSagaState>().Ignore(a => a.Errors);
+            base.OnModelCreating(modelBuilder);
+        }
     }
 }
