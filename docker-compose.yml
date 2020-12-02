@@ -1,28 +1,17 @@
-version: "3.5"
-
+version: "3.8"
 services:
   MassTransitSagaDeadlock.Worker:
     image: masstransitsaga/deadlock.worker:linux
     build:
       context: .
       dockerfile: MassTransitSagaDeadlock.Worker/Dockerfile 
-    depends_on: 
-      - rabbit
-      - mssql
-    networks: 
-      - backend
     deploy:
       replicas: 2
-
   MassTransitSagaDeadlock.Console.Client:
     image: masstransitsaga/deadlock.console.client:linux
     build:
       context: .
       dockerfile: MassTransitSagaDeadlock.Console.Client/Dockerfile 
-    depends_on: 
-      - rabbit 
-    networks: 
-      - backend
     environment:
       - MESSAGES_COUNT=20
   mssql:
@@ -32,8 +21,6 @@ services:
     environment:
       ACCEPT_EULA: Y
       SA_PASSWORD: P@ssword1!
-    networks: 
-      - backend
   rabbit:
     image: rabbitmq:3-management-alpine
     hostname: rabbit
@@ -44,8 +31,3 @@ services:
     ports:
       - 15672:15672
       - 5672:5672
-    networks: 
-      - backend
-networks:
-  backend: 
-    name: "backend"
