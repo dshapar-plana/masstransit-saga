@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "MassTransitSagaDeadlock.Console.Client": {
+      "commandName": "Project"
+    },
+    "Docker": {
+      "commandName": "Docker"
+    }
+  }
+}
