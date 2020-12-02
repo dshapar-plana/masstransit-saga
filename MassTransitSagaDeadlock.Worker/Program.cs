@@ -1,12 +1,9 @@
-﻿using System;
-using System.Data;
+﻿using System.Data;
 using System.IO;
-using System.Threading;
 using Dapper;
 using GreenPipes;
 using MassTransit;
 using MassTransit.EntityFrameworkCoreIntegration;
-using MassTransit.Logging;
 using MassTransitSagaDeadlock.Worker.Auxiliary;
 using MassTransitSagaDeadlock.Worker.Commands;
 using MassTransitSagaDeadlock.Worker.Consumers;
@@ -54,18 +51,13 @@ namespace MassTransitSagaDeadlock.Worker
                     SqlMapper.AddTypeHandler(new MsSqlErrorsCollectionTypeHandler());
                     SqlMapper.AddTypeHandler(new MsSqlMetadataCollectionTypeHandler());
 
-                    var separator = string.Empty.PadLeft(Console.BufferWidth, '_');
-
-                    Console.WriteLine($"Start database initialization\n{separator}");
-
                     var command = File.ReadAllText("TransferSagaStates.sql");
-
-                    using (var sqlConnection = new SqlConnection(connectionString))
-                    {
-                        sqlConnection.Execute(command);
-                    }
-
-                    Console.WriteLine($"Database initialization completed.\n{separator}");
+                    // ReSharper disable once UseObjectOrCollectionInitializer
+                    var sqlConnectionStringBuilder = new SqlConnectionStringBuilder(connectionString);
+                    sqlConnectionStringBuilder.InitialCatalog = "master";
+                    using var sqlConnection = new SqlConnection(sqlConnectionStringBuilder.ConnectionString);
+                    sqlConnection.Open();
+                    sqlConnection.Execute(command);
 
 
                     services.AddMassTransit(_ =>

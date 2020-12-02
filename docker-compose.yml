@@ -4,9 +4,7 @@ services:
     image: masstransitsaga/deadlock.worker:linux
     build:
       context: .
-      dockerfile: MassTransitSagaDeadlock.Worker/Dockerfile
-    environment:
-      - DOTNET_ENVIRONMENT=ATIIsolated
+      dockerfile: MassTransitSagaDeadlock.Worker/Dockerfile 
     depends_on: 
       - rabbit
       - mssql

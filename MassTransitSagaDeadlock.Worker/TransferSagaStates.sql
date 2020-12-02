@@ -1,31 +1,19 @@
-﻿--IF EXISTS (SELECT * FROM sysobjects WHERE name='TransferSagaStates' and xtype='U')
---BEGIN
---  DROP TABLE [dbo].[TransferSagaStates]
---END
-
-USE [master]
-GO
-
-IF NOT EXISTS(SELECT * FROM sys.databases WHERE name = 'masstransit_saga')
+﻿IF NOT EXISTS(SELECT * FROM sys.databases WHERE name = 'MasstransitSaga')
 BEGIN
-  CREATE DATABASE [masstransit_saga]
-END
-GO
+  CREATE DATABASE [MasstransitSaga]
+END 
  
-USE [masstransit_saga]
-GO
+USE MasstransitSaga 
 
  
 IF EXISTS(select * from sys.databases WHERE name=DB_NAME())
 BEGIN
   DECLARE @SQL nvarchar(max) = 'ALTER DATABASE "'+db_name()+'" SET RECOVERY SIMPLE'; 
   EXEC sys.sp_ExecuteSQL @stmt=@SQL;
-END
-GO
+END 
 
 IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='TransferSagaStates' and xtype='U')
 BEGIN
-
 CREATE TABLE [dbo].[TransferSagaStates] (
   [CorrelationID] uniqueidentifier NOT NULL CONSTRAINT pk_TransferSagaStates_CorrelationID PRIMARY KEY CLUSTERED,
   [CreatedAtDatetime] datetime2 NOT NULL,
@@ -41,16 +29,10 @@ CREATE TABLE [dbo].[TransferSagaStates] (
   [Hash] varchar(64) NOT NULL,
   [Salt] varchar(64) NOT NULL
 );
-END
-
---IF EXISTS (SELECT * FROM sysobjects WHERE name='TransferSagaState' and xtype='U')
---BEGIN
---  DROP TABLE [dbo].[TransferSagaState]
---END
+END 
 
 IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='TransferSagaState' and xtype='U')
-BEGIN
- 
+BEGIN 
 CREATE TABLE [dbo].[TransferSagaState] (
   [CorrelationID] uniqueidentifier NOT NULL CONSTRAINT pk_TransferSagaState_CorrelationID PRIMARY KEY CLUSTERED,
   [CreatedAtDatetime] datetime2 NOT NULL,
@@ -66,4 +48,4 @@ CREATE TABLE [dbo].[TransferSagaState] (
   [Hash] varchar(64) NOT NULL,
   [Salt] varchar(64) NOT NULL
 );
-END
+END 
