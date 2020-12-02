@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using MassTransit;
 using MassTransitSagaDeadlock.Console.Client.Settings;
@@ -40,7 +41,8 @@ namespace MassTransitSagaDeadlock.Console.Client
                 });
             });
 
-
+            System.Console.WriteLine($"{Environment.CurrentDirectory} will waiting 30 seconds.");
+            Thread.Sleep(TimeSpan.FromSeconds(30));
 
             var serviceProvider = services.BuildServiceProvider(true);
             var bus = serviceProvider.GetService<IBus>();

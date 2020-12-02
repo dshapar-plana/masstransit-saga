@@ -1,4 +1,5 @@
-﻿using System.Data;
+﻿using System;
+using System.Data;
 using System.IO;
 using Dapper;
 using GreenPipes;
@@ -16,6 +17,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
+using Polly;
+using Polly.Retry;
 
 namespace MassTransitSagaDeadlock.Worker
 {
@@ -57,17 +60,31 @@ namespace MassTransitSagaDeadlock.Worker
                     var sqlConnectionStringBuilder = new SqlConnectionStringBuilder(connectionString);
                     var dbName = sqlConnectionStringBuilder.InitialCatalog;
                     sqlConnectionStringBuilder.InitialCatalog = "master";
-                    using (var sqlConnection = new SqlConnection(sqlConnectionStringBuilder.ConnectionString))
+
+
+                    Policy retryPolicy = Policy.Handle<SqlException>().WaitAndRetry(
+                        retryCount: 7,
+                        sleepDurationProvider: attempt => TimeSpan.FromMilliseconds(1000));
+
+                    retryPolicy.Execute(() =>
                     {
+                        using var sqlConnection = new SqlConnection(sqlConnectionStringBuilder.ConnectionString);
                         sqlConnection.Open();
                         sqlConnection.Execute(dbCreationCommand);
-                    }
-                    sqlConnectionStringBuilder.InitialCatalog = dbName;
-                    using (var sqlConnection = new SqlConnection(sqlConnectionStringBuilder.ConnectionString))
+                    });
+
+                    retryPolicy.Execute(() =>
                     {
-                        sqlConnection.Open();
-                        sqlConnection.Execute(tablesCreationCommand);
-                    }
+                        sqlConnectionStringBuilder.InitialCatalog = dbName;
+                        using (var sqlConnection = new SqlConnection(sqlConnectionStringBuilder.ConnectionString))
+                        {
+                            sqlConnection.Open();
+                            sqlConnection.Execute(tablesCreationCommand);
+                        }
+                    });
+
+
+
 
 
 
