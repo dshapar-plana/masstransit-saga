@@ -51,13 +51,24 @@ namespace MassTransitSagaDeadlock.Worker
                     SqlMapper.AddTypeHandler(new MsSqlErrorsCollectionTypeHandler());
                     SqlMapper.AddTypeHandler(new MsSqlMetadataCollectionTypeHandler());
 
-                    var command = File.ReadAllText("TransferSagaStates.sql");
+                    var dbCreationCommand = File.ReadAllText("CreateDB.sql");
+                    var tablesCreationCommand = File.ReadAllText("TransferSagaStates.sql");
                     // ReSharper disable once UseObjectOrCollectionInitializer
                     var sqlConnectionStringBuilder = new SqlConnectionStringBuilder(connectionString);
+                    var dbName = sqlConnectionStringBuilder.InitialCatalog;
                     sqlConnectionStringBuilder.InitialCatalog = "master";
-                    using var sqlConnection = new SqlConnection(sqlConnectionStringBuilder.ConnectionString);
-                    sqlConnection.Open();
-                    sqlConnection.Execute(command);
+                    using (var sqlConnection = new SqlConnection(sqlConnectionStringBuilder.ConnectionString))
+                    {
+                        sqlConnection.Open();
+                        sqlConnection.Execute(dbCreationCommand);
+                    }
+                    sqlConnectionStringBuilder.InitialCatalog = dbName;
+                    using (var sqlConnection = new SqlConnection(sqlConnectionStringBuilder.ConnectionString))
+                    {
+                        sqlConnection.Open();
+                        sqlConnection.Execute(tablesCreationCommand);
+                    }
+
 
 
                     services.AddMassTransit(_ =>

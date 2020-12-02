@@ -1,4 +1,5 @@
 version: "3.5"
+
 services:
   MassTransitSagaDeadlock.Worker:
     image: masstransitsaga/deadlock.worker:linux
@@ -12,6 +13,18 @@ services:
       - backend
     deploy:
       replicas: 2
+
+  MassTransitSagaDeadlock.Console.Client:
+    image: masstransitsaga/deadlock.console.client:linux
+    build:
+      context: .
+      dockerfile: MassTransitSagaDeadlock.Console.Client/Dockerfile 
+    depends_on: 
+      - rabbit 
+    networks: 
+      - backend
+    environment:
+      - MESSAGES_COUNT=20
   mssql:
     image: mcr.microsoft.com/mssql/server:2019-latest
     ports:
