@@ -76,17 +76,10 @@ namespace MassTransitSagaDeadlock.Worker
                     retryPolicy.Execute(() =>
                     {
                         sqlConnectionStringBuilder.InitialCatalog = dbName;
-                        using (var sqlConnection = new SqlConnection(sqlConnectionStringBuilder.ConnectionString))
-                        {
-                            sqlConnection.Open();
-                            sqlConnection.Execute(tablesCreationCommand);
-                        }
+                        using var sqlConnection = new SqlConnection(sqlConnectionStringBuilder.ConnectionString);
+                        sqlConnection.Open();
+                        sqlConnection.Execute(tablesCreationCommand);
                     });
-
-
-
-
-
 
                     services.AddMassTransit(_ =>
                     {

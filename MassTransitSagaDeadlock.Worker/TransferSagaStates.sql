@@ -1,15 +1,4 @@
-﻿
- 
---USE MasstransitSaga 
-
- 
---IF EXISTS(select * from sys.databases WHERE name=DB_NAME())
---BEGIN
---  DECLARE @SQL nvarchar(max) = 'ALTER DATABASE "'+db_name()+'" SET RECOVERY SIMPLE'; 
---  EXEC sys.sp_ExecuteSQL @stmt=@SQL;
---END 
-
-IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='TransferSagaStates' and xtype='U')
+﻿IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='TransferSagaStates' and xtype='U')
 BEGIN
 CREATE TABLE dbo.[TransferSagaStates] (
   [CorrelationID] uniqueidentifier NOT NULL CONSTRAINT pk_TransferSagaStates_CorrelationID PRIMARY KEY CLUSTERED,
