@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using MassTransit;
 using MassTransitSagaDeadlock.Console.Client.Settings;
@@ -40,7 +41,7 @@ namespace MassTransitSagaDeadlock.Console.Client
                 });
             });
 
-
+            Thread.Sleep(TimeSpan.FromSeconds(15));
 
             var serviceProvider = services.BuildServiceProvider(true);
             var bus = serviceProvider.GetService<IBus>();
@@ -51,7 +52,7 @@ namespace MassTransitSagaDeadlock.Console.Client
             {
                 var endpoint = bus.GetSendEndpoint(new Uri($"queue:transfer-funds")).Result;
                 tasks[i] = SendMessage(endpoint);
-
+                System.Console.WriteLine($"Sent message #{i + 1}/{messagesCount}");
             }
 
             Task.WaitAll(tasks);

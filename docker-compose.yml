@@ -1,17 +1,19 @@
 version: "3.8"
+
 services:
   MassTransitSagaDeadlock.Worker:
     image: masstransitsaga/deadlock.worker:linux
     build:
       context: .
-      dockerfile: MassTransitSagaDeadlock.Worker/Dockerfile 
+      dockerfile: MassTransitSagaDeadlock.Worker/Dockerfile  
     deploy:
       replicas: 2
+
   MassTransitSagaDeadlock.Console.Client:
     image: masstransitsaga/deadlock.console.client:linux
     build:
       context: .
-      dockerfile: MassTransitSagaDeadlock.Console.Client/Dockerfile 
+      dockerfile: MassTransitSagaDeadlock.Console.Client/Dockerfile  
     environment:
       - MESSAGES_COUNT=20
   mssql:
@@ -20,7 +22,7 @@ services:
       - 1401:1433
     environment:
       ACCEPT_EULA: Y
-      SA_PASSWORD: P@ssword1!
+      SA_PASSWORD: P@ssword1! 
   rabbit:
     image: rabbitmq:3-management-alpine
     hostname: rabbit
@@ -30,4 +32,4 @@ services:
       - RABBITMQ_DEFAULT_VHOST=/
     ports:
       - 15672:15672
-      - 5672:5672
+      - 5672:5672 
