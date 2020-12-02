@@ -68,9 +68,7 @@ namespace MassTransitSagaDeadlock.Worker
                         sqlConnection.Open();
                         sqlConnection.Execute(tablesCreationCommand);
                     }
-
-
-
+                    
                     services.AddMassTransit(_ =>
                     {
                         _.AddConsumer<DepositFundsConsumer>();
