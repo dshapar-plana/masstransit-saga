@@ -33,7 +33,6 @@ namespace MassTransitSagaDeadlock.Worker
             Host.CreateDefaultBuilder(args)
                 .ConfigureServices((hostContext, services) =>
                 {
-                    services.AddMassTransitHostedService();
                     var connectionString = hostContext.Configuration.GetValue<string>("ConnectionString");
                     //for Dapper
                     services.AddScoped<IDbConnection>(db =>
@@ -81,8 +80,7 @@ namespace MassTransitSagaDeadlock.Worker
                         sqlConnection.Execute(tablesCreationCommand);
  
                     });
-
- 
+                    
                     services.AddMassTransit(_ =>
                     {
                         _.AddConsumer<DepositFundsConsumer>();
@@ -122,7 +120,7 @@ namespace MassTransitSagaDeadlock.Worker
 
                                 e.ConfigureSaga<TransferSagaState>(context, s =>
                                 {
-                                    var partition = e.CreatePartitioner(1);
+                                    var partition = e.CreatePartitioner(5);
 
                                     s.Message<TransferFundsCommand>(x => x.UsePartitioner(partition, m => m.Message.TransferFundsId));
                                     s.Message<WithdrawFundsCompletedEvent>(x => x.UsePartitioner(partition, m => m.Message.TransferFundsId));
@@ -141,6 +139,9 @@ namespace MassTransitSagaDeadlock.Worker
                             });
                         });
                     });
+
+                    services.AddMassTransitHostedService();
+
                 });
     }
 }

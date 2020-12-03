@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using MassTransit;
 using MassTransitSagaDeadlock.Console.Client.Settings;
+using MassTransitSagaDeadlock.Worker.Commands;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -41,22 +42,22 @@ namespace MassTransitSagaDeadlock.Console.Client
                 });
             });
 
-            Thread.Sleep(TimeSpan.FromSeconds(15));
+            Thread.Sleep(TimeSpan.FromSeconds(30));
 
             var serviceProvider = services.BuildServiceProvider(true);
             var bus = serviceProvider.GetService<IBus>();
 
             var messagesCount = int.Parse(Environment.GetEnvironmentVariable("MESSAGES_COUNT"));
             var tasks = new Task[messagesCount];
+            var endpoint = bus.GetSendEndpoint(new Uri($"queue:TransferFunds")).GetAwaiter().GetResult();
+            
             for (var i = 0; i < messagesCount; i++)
             {
-                var endpoint = bus.GetSendEndpoint(new Uri($"queue:transfer-funds")).Result;
                 tasks[i] = SendMessage(endpoint);
                 System.Console.WriteLine($"Sent message #{i + 1}/{messagesCount}");
             }
 
             Task.WaitAll(tasks);
-
         }
 
         private static Task SendMessage(ISendEndpoint endpoint)
